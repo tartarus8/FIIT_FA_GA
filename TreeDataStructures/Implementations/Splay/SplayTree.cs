@@ -66,9 +66,10 @@ public class SplayTree<TKey, TValue> : BinarySearchTree<TKey, TValue>
 
     protected override void OnNodeAdded(BstNode<TKey, TValue> newNode) => Splay(newNode);
 
-    protected override void OnNodeRemoved(TNode? parent, TNode? child) {
+    protected override void OnNodeRemoved(BstNode<TKey, TValue> unlinkedNode, BstNode<TKey, TValue>? parent, BstNode<TKey, TValue>? child) {
         if (parent != null) {
             Splay(parent);
         }
+        base.OnNodeRemoved(unlinkedNode, parent, child);
     }
 }

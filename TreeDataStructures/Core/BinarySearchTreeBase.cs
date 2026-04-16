@@ -64,6 +64,7 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode> : ITree<TKey, TV
     {
         TNode? parent = node.Parent;
         TNode? replacement;
+        TNode unlinkedNode = node;
         if (node.Left == null) {
             replacement = node.Right;
             Transplant(node, node.Right);
@@ -89,10 +90,7 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode> : ITree<TKey, TV
             }
         }
 
-        node.Parent = null;
-        node.Left = null;
-        node.Right = null;
-        OnNodeRemoved(parent, replacement);
+        OnNodeRemoved(unlinkedNode, parent, replacement);
     }
 
     protected TNode Minimum(TNode node)
@@ -123,7 +121,11 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode> : ITree<TKey, TV
 
     protected abstract TNode CreateNode(TKey key, TValue value);
     protected virtual void OnNodeAdded(TNode newNode) {}
-    protected virtual void OnNodeRemoved(TNode? parent, TNode? child) {}
+    protected virtual void OnNodeRemoved(TNode unlinkedNode, TNode? parent, TNode? child) {
+        unlinkedNode.Parent = null;
+        unlinkedNode.Left = null;
+        unlinkedNode.Right = null;
+    }
 
     protected TNode? FindNode(TKey key)
     {
@@ -235,12 +237,12 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode> : ITree<TKey, TV
         {
             return _strategy switch
             {
-                TraversalStrategy.PreOrder => MovePrefix(true),
-                TraversalStrategy.PostOrderReverse => MovePrefix(false),
-                TraversalStrategy.InOrder => MoveInfix(true),
-                TraversalStrategy.InOrderReverse => MoveInfix(false),
-                TraversalStrategy.PostOrder => MovePostfix(true),
-                TraversalStrategy.PreOrderReverse => MovePostfix(false),
+                TraversalStrategy.PreOrder          => MovePrefix(true),
+                TraversalStrategy.PreOrderReverse   => MovePrefix(false),
+                TraversalStrategy.InOrder           => MoveInfix(true),
+                TraversalStrategy.InOrderReverse    => MoveInfix(false),
+                TraversalStrategy.PostOrder         => MovePostfix(true),
+                TraversalStrategy.PostOrderReverse  => MovePostfix(false),
                 _ => false
             };
         }
@@ -250,15 +252,18 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode> : ITree<TKey, TV
             if (_stack.Count == 0) {
                 return false;
             }
+
             _current = _stack.Pop();
-            TNode? first = leftFirst ? _current.Right : _current.Left;
-            TNode? second = leftFirst ? _current.Left : _current.Right;
-            if (first != null) {
-                _stack.Push(first);
+            TNode? firstToPush = leftFirst ? _current.Right : _current.Left;
+            TNode? secondToPush = leftFirst ? _current.Left : _current.Right;
+
+            if (firstToPush != null) {
+                _stack.Push(firstToPush);
             }
-            if (second != null) {
-                _stack.Push(second);
+            if (secondToPush != null) {
+                _stack.Push(secondToPush);
             }
+
             return true;
         }
 
@@ -280,12 +285,11 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode> : ITree<TKey, TV
 
         private bool MovePostfix(bool leftFirst)
         {
-            while (_stack.Count > 0 || _lastVisited != null)
-            {
+            while (_stack.Count > 0 || _lastVisited != null) {
                 if (_lastVisited != null) {
                     _stack.Push(_lastVisited);
                     _lastVisited = leftFirst ? _lastVisited.Left : _lastVisited.Right;
-                    }
+                }
                 else {
                     TNode peek = _stack.Peek();
                     TNode? next = leftFirst ? peek.Right : peek.Left;
@@ -307,7 +311,8 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode> : ITree<TKey, TV
             _stack.Clear();
             _current = null;
             _prevNode = null;
-            if (_strategy == TraversalStrategy.PreOrder || _strategy == TraversalStrategy.PostOrderReverse) {
+            _lastVisited = null;
+            if (_strategy == TraversalStrategy.PreOrder || _strategy == TraversalStrategy.PreOrderReverse) {
                 if (_root != null) {
                     _stack.Push(_root);
                 }

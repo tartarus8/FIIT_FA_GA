@@ -17,9 +17,10 @@ public class AvlTree<TKey, TValue> : BinarySearchTreeBase<TKey, TValue, AvlNode<
         BalanceUpwards(newNode.Parent);
     }
 
-    protected override void OnNodeRemoved(AvlNode<TKey, TValue>? parent, AvlNode<TKey, TValue>? child)
+    protected override void OnNodeRemoved(AvlNode<TKey, TValue> unlinkedNode, AvlNode<TKey, TValue>? parent, AvlNode<TKey, TValue>? child)
     {
         BalanceUpwards(parent);
+        base.OnNodeRemoved(unlinkedNode, parent, child);
     }
 
     private void BalanceUpwards(AvlNode<TKey, TValue>? node)
