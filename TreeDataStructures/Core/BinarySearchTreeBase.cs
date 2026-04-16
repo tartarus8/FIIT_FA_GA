@@ -65,10 +65,12 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode> : ITree<TKey, TV
         TNode? parent = node.Parent;
         TNode? replacement;
         if (node.Left == null) {
-            replacement = node.Right; Transplant(node, node.Right);
+            replacement = node.Right;
+            Transplant(node, node.Right);
         }
         else if (node.Right == null) {
-            replacement = node.Left; Transplant(node, node.Left);
+            replacement = node.Left;
+            Transplant(node, node.Left);
         }
         else {
             TNode y = Minimum(node.Right);
@@ -86,6 +88,10 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode> : ITree<TKey, TV
                 parent = y;
             }
         }
+
+        node.Parent = null;
+        node.Left = null;
+        node.Right = null;
         OnNodeRemoved(parent, replacement);
     }
 
